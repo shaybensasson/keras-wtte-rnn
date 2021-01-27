@@ -1,0 +1,1 @@
+We use tensorflow 1.15 which supports cuda 10.0

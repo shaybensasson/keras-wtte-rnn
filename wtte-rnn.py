@@ -1,12 +1,12 @@
 import numpy as np
-from keras.models import Sequential
-from keras.layers import Dense
-from keras.layers import LSTM
-from keras.layers import Activation
-from keras.layers import Masking
-from keras.optimizers import RMSprop
-from keras import backend as k
 from sklearn.preprocessing import normalize
+from tensorflow.keras import backend as k
+from tensorflow.keras.layers import Activation
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import LSTM
+from tensorflow.keras.layers import Masking
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.optimizers import RMSprop
 
 """
     Discrete log-likelihood for Weibull hazard function on censored survival data
@@ -14,6 +14,8 @@ from sklearn.preprocessing import normalize
     ab_pred is a (samples, 2) tensor containing predicted Weibull alpha (a) and beta (b) parameters
     For math, see https://ragulpr.github.io/assets/draft_master_thesis_martinsson_egil_wtte_rnn_2016.pdf (Page 35)
 """
+
+
 def weibull_loglik_discrete(y_true, ab_pred, name=None):
     y_ = y_true[:, 0]
     u_ = y_true[:, 1]
@@ -25,10 +27,13 @@ def weibull_loglik_discrete(y_true, ab_pred, name=None):
 
     return -1 * k.mean(u_ * k.log(k.exp(hazard1 - hazard0) - 1.0) - hazard1)
 
+
 """
     Not used for this model, but included in case somebody needs it
     For math, see https://ragulpr.github.io/assets/draft_master_thesis_martinsson_egil_wtte_rnn_2016.pdf (Page 35)
 """
+
+
 def weibull_loglik_continuous(y_true, ab_pred, name=None):
     y_ = y_true[:, 0]
     u_ = y_true[:, 1]
@@ -42,6 +47,8 @@ def weibull_loglik_continuous(y_true, ab_pred, name=None):
 """
     Custom Keras activation function, outputs alpha neuron using exponentiation and beta using softplus
 """
+
+
 def activate(ab):
     a = k.exp(ab[:, 0])
     b = k.softplus(ab[:, 1])
@@ -61,9 +68,12 @@ def activate(ab):
     There are probably MUCH better ways of doing this, but I don't use Numpy that much, and the data parsing isn't the
     point of this demo anyway.
 """
+
+
 def load_file(name):
     with open(name, 'r') as file:
         return np.loadtxt(file, delimiter=',')
+
 
 np.set_printoptions(suppress=True, threshold=10000)
 
@@ -84,6 +94,7 @@ test_x[:, 0:2] -= 1
 
 # Configurable observation look-back period for each engine/day
 max_time = 100
+
 
 def build_data(engine, time, x, max_time, is_test):
     # y[0] will be days remaining, y[1] will be event indicator, always 1 for this data
@@ -110,12 +121,13 @@ def build_data(engine, time, x, max_time, is_test):
             out_y = np.append(out_y, np.array((max_engine_time - j, 1), ndmin=2), axis=0)
 
             xtemp = np.zeros((1, max_time, 24))
-            xtemp[:, max_time-min(j, 99)-1:max_time, :] = engine_x[max(0, j-max_time+1):j+1, :]
+            xtemp[:, max_time - min(j, 99) - 1:max_time, :] = engine_x[max(0, j - max_time + 1):j + 1, :]
             this_x = np.concatenate((this_x, xtemp))
 
         out_x = np.concatenate((out_x, this_x))
 
     return out_x, out_y
+
 
 train_x, train_y = build_data(train[:, 0], train[:, 1], train[:, 2:26], max_time, False)
 test_x = build_data(test_x[:, 0], test_x[:, 1], test_x[:, 2:26], max_time, True)[0]
